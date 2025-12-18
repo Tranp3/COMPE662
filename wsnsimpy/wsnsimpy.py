@@ -62,6 +62,14 @@ class Node:
 
     ############################
     def send(self,dst,*args,**kwargs):
+        # Check battery before sending (if power model enabled)
+        if hasattr(self, 'consume_tx_energy'):
+            if not self.consume_tx_energy():
+                # Battery depleted during TX
+                if hasattr(self, 'check_and_handle_battery_depletion'):
+                    self.check_and_handle_battery_depletion()
+                return  # Don't send packet
+        
         for (dist,node) in self.neighbor_distance_list:
             if dist <= self.tx_range:
                 if dst == BROADCAST_ADDR or dst is node.id:

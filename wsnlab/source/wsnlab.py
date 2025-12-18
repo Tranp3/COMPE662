@@ -34,14 +34,10 @@ class Addr:
 
     ############################
     def __repr__(self):
-        """Representation method of Addr.
-
-           Args:
-
-           Returns:
-               string: represents Addr object as a string.
-        """
-        return '[%d,%d]' % (self.net_addr, self.node_addr)
+        """Representation method of Addr that tolerates None values."""
+        net = self.net_addr if self.net_addr is not None else 'None'
+        node = self.node_addr if self.node_addr is not None else 'None'
+        return f'[{net},{node}]'
 
     ############################
     def __eq__(self, other):

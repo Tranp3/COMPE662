@@ -73,43 +73,89 @@ class Plotter(GenericPlotter):
             self.info_panel.pack(side=RIGHT, fill=Y)
 
         # (Top inspector removed) -- Details list and Detail pane are used instead.
-        # details listbox with scrollbar (shows attributes/details)
-        self.neigh_label = Label(self.info_panel, text="Info:")
-        self.neigh_label.pack(anchor='nw', padx=6)
-        self.neigh_frame = Frame(self.info_panel)
-        self.neigh_frame.pack(fill=BOTH, expand=YES, padx=6, pady=(0,6))
-        self.neigh_scroll = Scrollbar(self.neigh_frame, orient=VERTICAL)
-        self.neigh_list = Listbox(self.neigh_frame, yscrollcommand=self.neigh_scroll.set, height=8)
-        self.neigh_scroll.config(command=self.neigh_list.yview)
-        self.neigh_scroll.pack(side=RIGHT, fill=Y)
-        self.neigh_list.pack(side=LEFT, fill=BOTH, expand=YES)
-        
+        # Use a vertical PanedWindow to make Info and Detail sections resizable
         try:
-            self.neigh_list.config(bg='white', fg='black', selectbackground="#04ad09")
-        except Exception:
-            pass
+            self.info_panes = PanedWindow(self.info_panel, orient=VERTICAL)
+            self.info_panes.pack(fill=BOTH, expand=YES)
+            
+            # Top pane: Info section with listbox
+            self.info_top_frame = Frame(self.info_panes)
+            self.neigh_label = Label(self.info_top_frame, text="Info:")
+            self.neigh_label.pack(anchor='nw', padx=6)
+            self.neigh_frame = Frame(self.info_top_frame)
+            self.neigh_frame.pack(fill=BOTH, expand=YES, padx=6, pady=(0,6))
+            self.neigh_scroll = Scrollbar(self.neigh_frame, orient=VERTICAL)
+            self.neigh_list = Listbox(self.neigh_frame, yscrollcommand=self.neigh_scroll.set)
+            self.neigh_scroll.config(command=self.neigh_list.yview)
+            self.neigh_scroll.pack(side=RIGHT, fill=Y)
+            self.neigh_list.pack(side=LEFT, fill=BOTH, expand=YES)
+            
+            try:
+                self.neigh_list.config(bg='white', fg='black', selectbackground="#04ad09")
+            except Exception:
+                pass
 
-        # double-click list entry to show details quickly
-        try:
-            self.neigh_list.bind('<Double-1>', lambda ev: self.show_selected_neighbor_details())
-            # also on single selection change show details
-            self.neigh_list.bind('<<ListboxSelect>>', lambda ev: self.show_selected_neighbor_details())
+            # double-click list entry to show details quickly
+            try:
+                self.neigh_list.bind('<Double-1>', lambda ev: self.show_selected_neighbor_details())
+                # also on single selection change show details
+                self.neigh_list.bind('<<ListboxSelect>>', lambda ev: self.show_selected_neighbor_details())
+            except Exception:
+                pass
+            
+            # button to show messages sent/received by the currently inspected node
+            self.msgs_btn = Button(self.info_top_frame, text="Show node messages", command=lambda: self.show_node_messages())
+            self.msgs_btn.pack(padx=6, pady=(0,6))
+            
+            self.info_panes.add(self.info_top_frame, minsize=100)
+            
+            # Bottom pane: Detail section with text widget
+            self.info_bottom_frame = Frame(self.info_panes)
+            self.neigh_detail_label = Label(self.info_bottom_frame, text="Detail:")
+            self.neigh_detail_label.pack(anchor='nw', padx=6)
+            self.neigh_detail_text = Text(self.info_bottom_frame, wrap=WORD, width=40)
+            self.neigh_detail_text.pack(fill=BOTH, expand=YES, padx=6, pady=(0,6))
+            try:
+                self.neigh_detail_text.config(state=DISABLED, bg='white', fg='black')
+            except Exception:
+                self.neigh_detail_text.config(state=DISABLED)
+            
+            self.info_panes.add(self.info_bottom_frame, minsize=100)
+            
         except Exception:
-            pass
-        
-        # button to show messages sent/received by the currently inspected node
-        self.msgs_btn = Button(self.info_panel, text="Show node messages", command=lambda: self.show_node_messages())
-        self.msgs_btn.pack(padx=6, pady=(0,6))
+            # Fallback to fixed layout if PanedWindow fails
+            self.neigh_label = Label(self.info_panel, text="Info:")
+            self.neigh_label.pack(anchor='nw', padx=6)
+            self.neigh_frame = Frame(self.info_panel)
+            self.neigh_frame.pack(fill=BOTH, expand=YES, padx=6, pady=(0,6))
+            self.neigh_scroll = Scrollbar(self.neigh_frame, orient=VERTICAL)
+            self.neigh_list = Listbox(self.neigh_frame, yscrollcommand=self.neigh_scroll.set, height=8)
+            self.neigh_scroll.config(command=self.neigh_list.yview)
+            self.neigh_scroll.pack(side=RIGHT, fill=Y)
+            self.neigh_list.pack(side=LEFT, fill=BOTH, expand=YES)
+            
+            try:
+                self.neigh_list.config(bg='white', fg='black', selectbackground="#04ad09")
+            except Exception:
+                pass
 
-        # persistent detail area (shows full value of selected attribute)
-        self.neigh_detail_label = Label(self.info_panel, text="Detail:")
-        self.neigh_detail_label.pack(anchor='nw', padx=6)
-        self.neigh_detail_text = Text(self.info_panel, wrap=WORD, width=40, height=16)
-        self.neigh_detail_text.pack(fill=X, padx=6, pady=(0,6))
-        try:
-            self.neigh_detail_text.config(state=DISABLED, bg='white', fg='black')
-        except Exception:
-            self.neigh_detail_text.config(state=DISABLED)
+            try:
+                self.neigh_list.bind('<Double-1>', lambda ev: self.show_selected_neighbor_details())
+                self.neigh_list.bind('<<ListboxSelect>>', lambda ev: self.show_selected_neighbor_details())
+            except Exception:
+                pass
+            
+            self.msgs_btn = Button(self.info_panel, text="Show node messages", command=lambda: self.show_node_messages())
+            self.msgs_btn.pack(padx=6, pady=(0,6))
+
+            self.neigh_detail_label = Label(self.info_panel, text="Detail:")
+            self.neigh_detail_label.pack(anchor='nw', padx=6)
+            self.neigh_detail_text = Text(self.info_panel, wrap=WORD, width=40, height=16)
+            self.neigh_detail_text.pack(fill=X, padx=6, pady=(0,6))
+            try:
+                self.neigh_detail_text.config(state=DISABLED, bg='white', fg='black')
+            except Exception:
+                self.neigh_detail_text.config(state=DISABLED)
 
     ###################
     def setTime(self, time):
